@@ -1,4 +1,4 @@
-name: Windows Package
+name: "Windows Package"
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
       - name: Build Deployment
-        uses: uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@v1
         shell: cmd
         run: |
           md ${{github.workspace}}\deploy\nb-dashcam-tools
