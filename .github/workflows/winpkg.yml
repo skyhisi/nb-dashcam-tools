@@ -30,7 +30,7 @@ jobs:
       - name: Build Deployment
         shell: cmd
         run: |
-          C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
+          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat"
           md ${{github.workspace}}\deploy\nb-dashcam-tools
           copy ${{github.workspace}}\build\Release\nb-dashcam-tools.exe ${{github.workspace}}\deploy\nb-dashcam-tools
           windeployqt ${{github.workspace}}\deploy\nb-dashcam-tools\nb-dashcam-tools.exe
