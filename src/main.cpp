@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     a.setOrganizationName(QLatin1String("SRP"));
     a.setOrganizationDomain(QLatin1String("silasparker.co.uk"));
     a.setApplicationName(QObject::tr("NB Dashcam Tools"));
-    a.setApplicationVersion(QLatin1String("0.1.0"));
+    a.setApplicationVersion(QLatin1String("0.1.1"));
 
     ToolLocator* tools = ToolLocator::instance();
     tools->addSearchPath(QCoreApplication::applicationDirPath());

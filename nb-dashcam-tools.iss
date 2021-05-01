@@ -1,5 +1,5 @@
 #define MyAppName "NB Dashcam Tools"
-#define MyAppVersion "0.1"
+#define MyAppVersion "0.1.1"
 #define MyAppPublisher "SRP"
 #define MyAppURL "https://github.com/skyhisi/nb-dashcam-tools"
 #define MyAppExeName "nb-dashcam-tools.exe"
