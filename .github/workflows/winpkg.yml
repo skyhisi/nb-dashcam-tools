@@ -28,9 +28,9 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
       - name: Build Deployment
+        uses: uses: ilammy/msvc-dev-cmd@v1
         shell: cmd
         run: |
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x86_amd64
           md ${{github.workspace}}\deploy\nb-dashcam-tools
           copy ${{github.workspace}}\build\Release\nb-dashcam-tools.exe ${{github.workspace}}\deploy\nb-dashcam-tools
           windeployqt ${{github.workspace}}\deploy\nb-dashcam-tools\nb-dashcam-tools.exe
