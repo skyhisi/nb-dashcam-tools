@@ -1,4 +1,10 @@
 # NB Dashcam Tools
+
+[![Build](https://github.com/skyhisi/nb-dashcam-tools/actions/workflows/build.yml/badge.svg)](https://github.com/skyhisi/nb-dashcam-tools/actions/workflows/build.yml)
+![GitHub](https://img.shields.io/github/license/skyhisi/nb-dashcam-tools?color=green)
+![Lines of code](https://img.shields.io/tokei/lines/github/skyhisi/nb-dashcam-tools)
+
+
 Tools for merging clips and extracting GPS data from Nextbase dash cam video
 files.
 
