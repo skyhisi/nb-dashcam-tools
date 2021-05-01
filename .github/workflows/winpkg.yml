@@ -11,7 +11,7 @@ env:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2019
 
     steps:
       - uses: actions/checkout@v2
@@ -30,10 +30,11 @@ jobs:
       - name: Build Deployment
         shell: cmd
         run: |
+          C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat
           md ${{github.workspace}}\deploy\nb-dashcam-tools
           copy ${{github.workspace}}\build\Release\nb-dashcam-tools.exe ${{github.workspace}}\deploy\nb-dashcam-tools
           windeployqt ${{github.workspace}}\deploy\nb-dashcam-tools\nb-dashcam-tools.exe
-          7z a -tzip nb-dashcam-tools-windows.zip nb-dashcam-tools -w${{github.workspace}}\deploy
+          7z a -tzip -r nb-dashcam-tools-windows.zip nb-dashcam-tools -w${{github.workspace}}\deploy
 
       - name: Release
         uses: softprops/action-gh-release@v1
