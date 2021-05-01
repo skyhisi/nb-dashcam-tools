@@ -1,0 +1,45 @@
+name: Windows Package
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: '6.0.3'
+
+      - name: Configure CMake
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+
+      - name: Build
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Build Deployment
+        shell: bash
+        run: |
+          mkdir -p ${{github.workspace}}/deploy/nb-dashcam-tools
+          cp ${{github.workspace}}/build/nb-dashcam-tools.exe ${{github.workspace}}/deploy/nb-dashcam-tools
+          windeployqt ${{github.workspace}}/deploy/nb-dashcam-tools/nb-dashcam-tools.exe
+          7z a -tzip nb-dashcam-tools.zip nb-dashcam-tools -w${{github.workspace}}/deploy
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: ${{github.workspace}}/deploy/nb-dashcam-tools.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
