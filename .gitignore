@@ -53,3 +53,5 @@ compile_commands.json
 
 # Build folder
 build*
+deploy
+nb-dashcam-tools-setup.exe
