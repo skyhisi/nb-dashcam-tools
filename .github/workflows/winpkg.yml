@@ -28,12 +28,12 @@ jobs:
         run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
       - name: Build Deployment
-        shell: bash
+        shell: cmd
         run: |
-          mkdir -p ${{github.workspace}}/deploy/nb-dashcam-tools
-          cp ${{github.workspace}}/build/Release/nb-dashcam-tools.exe ${{github.workspace}}/deploy/nb-dashcam-tools
-          windeployqt ${{github.workspace}}/deploy/nb-dashcam-tools/nb-dashcam-tools.exe
-          7z a -tzip nb-dashcam-tools-windows.zip nb-dashcam-tools -w${{github.workspace}}/deploy
+          md ${{github.workspace}}\deploy\nb-dashcam-tools
+          copy ${{github.workspace}}\build\Release\nb-dashcam-tools.exe ${{github.workspace}}\deploy\nb-dashcam-tools
+          windeployqt ${{github.workspace}}\deploy\nb-dashcam-tools\nb-dashcam-tools.exe
+          7z a -tzip nb-dashcam-tools-windows.zip nb-dashcam-tools -w${{github.workspace}}\deploy
 
       - name: Release
         uses: softprops/action-gh-release@v1
