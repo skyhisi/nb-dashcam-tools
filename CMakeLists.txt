@@ -81,8 +81,13 @@ else()
 endif()
 
 target_compile_definitions(nb-dashcam-tools PRIVATE QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
-target_compile_options(nb-dashcam-tools PRIVATE -Werror -Wall -Wextra)
+
+if(CMAKE_COMPILER_IS_GNUCXX)
+  target_compile_options(nb-dashcam-tools PRIVATE -Werror -Wall -Wextra)
+endif()
+
 target_link_libraries(nb-dashcam-tools PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   set_property(TARGET nb-dashcam-tools PROPERTY WIN32_EXECUTABLE true)
 endif()
