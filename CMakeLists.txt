@@ -41,8 +41,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 #    endif()
 #endif()
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets Tools REQUIRED)
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets Tools REQUIRED)
+find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+  find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Tools REQUIRED)
+endif()
+
 
 set(PROJECT_SOURCES
         src/clipmergewidget.cpp
@@ -93,20 +97,24 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
 endif()
 
 if (WIN32)
-  set(WIN_INSTALL_FFMPEG OFF CACHE BOOL "Install ffmpeg on Windows")
   install(TARGETS nb-dashcam-tools RUNTIME DESTINATION ".")
-  get_target_property(WINDEPLOYQT_BIN Qt${QT_VERSION_MAJOR}::windeployqt IMPORTED_LOCATION)
-  install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_BIN}\" \"\${CMAKE_INSTALL_PREFIX}/$<TARGET_FILE_NAME:nb-dashcam-tools>\")")
+  
+  if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    get_target_property(WINDEPLOYQT_BIN Qt${QT_VERSION_MAJOR}::windeployqt IMPORTED_LOCATION)
+    install(CODE "execute_process(COMMAND \"${WINDEPLOYQT_BIN}\" \"\${CMAKE_INSTALL_PREFIX}/$<TARGET_FILE_NAME:nb-dashcam-tools>\")")
+  endif()
+  
+  set(WIN_INSTALL_FFMPEG OFF CACHE BOOL "Install ffmpeg on Windows")
   if (WIN_INSTALL_FFMPEG)
     find_program(7Z_EXE "7z")
     file(DOWNLOAD "https://www.gyan.dev/ffmpeg/builds/release-version" "${CMAKE_BINARY_DIR}/ffmpeg-version.txt")
     file(READ "${CMAKE_BINARY_DIR}/ffmpeg-version.txt" FFMPEG_VERSION)
-    message(STATUS "FFMPEG_VERSION=${FFMPEG_VERSION}")
     set(FFMPEG_URL "https://github.com/GyanD/codexffmpeg/releases/download/${FFMPEG_VERSION}/ffmpeg-${FFMPEG_VERSION}-essentials_build.7z")
     message(STATUS "FFMPEG_URL=${FFMPEG_URL}")
     install(CODE "file(DOWNLOAD \"${FFMPEG_URL}\" \"${CMAKE_BINARY_DIR}/ffmpeg.7z\" SHOW_PROGRESS)")
     install(CODE "execute_process(COMMAND \"${7Z_EXE}\" e -r -y \"-o\${CMAKE_INSTALL_PREFIX}\" \"${CMAKE_BINARY_DIR}/ffmpeg.7z\" ffmpeg.exe)")
   endif()
+
 else()
   install(TARGETS nb-dashcam-tools)
 endif()
