@@ -35,6 +35,9 @@ Camera | Supported | Tested
 622GW  | Maybe     | No
 
 
+## Downloads
+ * [Windows Installer](https://github.com/skyhisi/nb-dashcam-tools/releases/latest/download/nb-dashcam-tools-setup.exe)
+
 ## Building
 ### Requirements
  * Qt 5 or Qt 6
