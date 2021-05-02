@@ -5,17 +5,17 @@ Summary:        Tools for merging clips and extracting GPS data from Nextbase da
 
 License:        GPLv3
 URL:            https://github.com/skyhisi/nb-dashcam-tools
-Source0:        https://github.com/skyhisi/nb-dashcam-tools/releases/latest/download/nb-dashcam-tools.tgz
+Source0:        https://github.com/skyhisi/nb-dashcam-tools/releases/latest/download/nb-dashcam-tools-%{version}.tgz
 
-BuildRequires:  qt5-qtbase-devel cmake
-Requires:       ffmpeg qt5-qtbase qt5-qtbase-gui
+BuildRequires:  qt6-qtbase-devel qt6-qttools-devel cmake
+Requires:       qt6-qtbase qt6-qtbase-gui ffmpeg
 
 %description
 Tools for merging clips and extracting GPS data from Nextbase dash cam video files.
 
 
 %prep
-%setup -n nb-dashcam-tools
+%setup
 
 
 %build
