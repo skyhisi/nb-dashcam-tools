@@ -11,6 +11,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Create version.txt
         run: git describe --tags --match 'v*' >version.txt
@@ -33,6 +35,9 @@ jobs:
     runs-on: windows-2019
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
       - uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install Qt
@@ -61,6 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - name: Create version.txt
         run: git describe --tags --match 'v*' >version.txt
