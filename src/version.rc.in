@@ -1,0 +1,41 @@
+#define VER_FILEVERSION             @APP_VER_MAJOR@,@APP_VER_MINOR@,@APP_VER_PATCH@,0
+#define VER_FILEVERSION_STR         "@APP_VER_MAJOR@.@APP_VER_MINOR@.@APP_VER_PATCH@.0\0"
+
+#define VER_PRODUCTVERSION          VER_FILEVERSION
+#define VER_PRODUCTVERSION_STR      VER_FILEVERSION_STR
+
+#ifndef DEBUG
+#define VER_DEBUG                   0
+#else
+#define VER_DEBUG                   0x1L
+#endif
+
+1 VERSIONINFO
+FILEVERSION     VER_FILEVERSION
+PRODUCTVERSION  VER_PRODUCTVERSION
+FILEFLAGSMASK   0x17L
+FILEFLAGS       (VER_DEBUG)
+FILEOS          0x4L
+FILETYPE        0x1L
+FILESUBTYPE     0x0L
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "CompanyName",      "SRP"
+      VALUE "FileDescription",  "NB Dashcam Tools"
+      VALUE "FileVersion",      VER_FILEVERSION_STR
+      VALUE "InternalName",     "nb-dashcam-tools"
+      VALUE "LegalCopyright",   "Copyright 2021 Silas Parker"
+      VALUE "OriginalFilename", "nb-dashcam-tools.exe"
+      VALUE "ProductName",      "NB Dashcam Tools"
+      VALUE "ProductVersion",   VER_PRODUCTVERSION_STR
+    END
+  END
+
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END

@@ -16,10 +16,12 @@
 # along with NB Dashcam Tools. If not, see <https://www.gnu.org/licenses/>.
 
 cmake_minimum_required(VERSION 3.15)
-
 project(nb-dashcam-tools LANGUAGES CXX)
 
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(APP_VER_MAJOR 0)
+set(APP_VER_MINOR 1)
+set(APP_VER_PATCH 3)
+set(APP_VER_STR "${APP_VER_MAJOR}.${APP_VER_MINOR}.${APP_VER_PATCH}")
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -28,63 +30,55 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# QtCreator supports the following variables for Android, which are identical to qmake Android variables.
-# Check https://doc.qt.io/qt/deployment-android.html for more information.
-# They need to be set before the find_package( ...) calls below.
-
-#if(ANDROID)
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-#    if (ANDROID_ABI STREQUAL "armeabi-v7a")
-#        set(ANDROID_EXTRA_LIBS
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libcrypto.so
-#            ${CMAKE_CURRENT_SOURCE_DIR}/path/to/libssl.so)
-#    endif()
-#endif()
-
 find_package(QT NAMES Qt6 Qt5 COMPONENTS Widgets REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Widgets REQUIRED)
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
   find_package(Qt${QT_VERSION_MAJOR} COMPONENTS Tools REQUIRED)
 endif()
 
+configure_file("${CMAKE_SOURCE_DIR}/src/main.cpp" "${CMAKE_BINARY_DIR}/main.cpp" @ONLY)
 
 set(PROJECT_SOURCES
-        src/clipmergewidget.cpp
-        src/clipmergewidget.hpp
-        src/clipmergewidget.ui
-        src/gpsexport.cpp
-        src/gpsexport.hpp
-        src/gpsexportwidget.cpp
-        src/gpsexportwidget.hpp
-        src/gpsexportwidget.ui
-        src/gpssampleparser.cpp
-        src/gpssampleparser.hpp
-        src/main.cpp
-        src/mainwindow.cpp
-        src/mainwindow.hpp
-        src/mp4file.cpp
-        src/mp4file.hpp
-        src/toollocator.cpp
-        src/toollocator.hpp
+  src/clipmergewidget.cpp
+  src/clipmergewidget.hpp
+  src/clipmergewidget.ui
+  src/gpsexport.cpp
+  src/gpsexport.hpp
+  src/gpsexportwidget.cpp
+  src/gpsexportwidget.hpp
+  src/gpsexportwidget.ui
+  src/gpssampleparser.cpp
+  src/gpssampleparser.hpp
+  "${CMAKE_BINARY_DIR}/main.cpp"
+  src/mainwindow.cpp
+  src/mainwindow.hpp
+  src/mp4file.cpp
+  src/mp4file.hpp
+  src/toollocator.cpp
+  src/toollocator.hpp
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(nb-dashcam-tools
-        ${PROJECT_SOURCES}
-    )
-else()
-    if(ANDROID)
-        add_library(nb-dashcam-tools SHARED
-            ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(nb-dashcam-tools
-            ${PROJECT_SOURCES}
-        )
-    endif()
+if (WIN32)
+  configure_file("${CMAKE_SOURCE_DIR}/src/version.rc.in" "${CMAKE_BINARY_DIR}/version.rc" @ONLY)
+  list(APPEND PROJECT_SOURCES "${CMAKE_BINARY_DIR}/version.rc")
 endif()
 
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+  qt_add_executable(nb-dashcam-tools
+    ${PROJECT_SOURCES}
+  )
+else()
+  add_executable(nb-dashcam-tools
+    ${PROJECT_SOURCES}
+  )
+endif()
+
+target_include_directories(nb-dashcam-tools PRIVATE src)
 target_compile_definitions(nb-dashcam-tools PRIVATE QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
+if ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  target_compile_definitions(nb-dashcam-tools PRIVATE DEBUG)
+endif()
+set_source_files_properties(src/main.cpp PROPERTIES COMPILE_DEFINITIONS "APP_VER_STR=\"${APP_VER_STR}\"")
 
 if(CMAKE_COMPILER_IS_GNUCXX)
   target_compile_options(nb-dashcam-tools PRIVATE -Werror -Wall -Wextra)
@@ -111,8 +105,15 @@ if (WIN32)
     file(READ "${CMAKE_BINARY_DIR}/ffmpeg-version.txt" FFMPEG_VERSION)
     set(FFMPEG_URL "https://github.com/GyanD/codexffmpeg/releases/download/${FFMPEG_VERSION}/ffmpeg-${FFMPEG_VERSION}-essentials_build.7z")
     message(STATUS "FFMPEG_URL=${FFMPEG_URL}")
-    install(CODE "file(DOWNLOAD \"${FFMPEG_URL}\" \"${CMAKE_BINARY_DIR}/ffmpeg.7z\" SHOW_PROGRESS)")
+    set(FFMPEG_7Z_FILE "${CMAKE_BINARY_DIR}/ffmpeg.7z")
+    install(CODE "if(NOT EXISTS \"${FFMPEG_7Z_FILE}\")\n    file(DOWNLOAD \"${FFMPEG_URL}\" \"${FFMPEG_7Z_FILE}\" SHOW_PROGRESS)\n  endif()")
     install(CODE "execute_process(COMMAND \"${7Z_EXE}\" e -r -y \"-o\${CMAKE_INSTALL_PREFIX}\" \"${CMAKE_BINARY_DIR}/ffmpeg.7z\" ffmpeg.exe)")
+  endif()
+  
+  set(WIN_CREATE_SETUP OFF CACHE BOOL "Create setup program")
+  if (WIN_CREATE_SETUP)
+    find_program(ISCC_EXE "ISCC" PATHS "$ENV{ProgramFiles\(x86\)}/Inno Setup 6")
+    install(CODE "execute_process(COMMAND \"${ISCC_EXE}\" /DMyAppVersion=${APP_VER_STR} nb-dashcam-tools.iss)")
   endif()
 
 else()
