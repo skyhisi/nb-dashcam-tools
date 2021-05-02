@@ -18,10 +18,27 @@
 cmake_minimum_required(VERSION 3.15)
 project(nb-dashcam-tools LANGUAGES CXX)
 
-set(APP_VER_MAJOR 0)
-set(APP_VER_MINOR 1)
-set(APP_VER_PATCH 3)
+if (EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  find_program(GIT_EXE git)
+  execute_process(
+    COMMAND "${GIT_EXE}" describe --tags --match "v*"
+    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    OUTPUT_FILE "${CMAKE_SOURCE_DIR}/version.txt"
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+endif()
+
+file(READ "${CMAKE_SOURCE_DIR}/version.txt" RAW_VER_STR)
+if(NOT "${RAW_VER_STR}" MATCHES "^v([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)")
+  message(FATAL_ERROR "Failed to parse version.txt file")
+endif()
+
+set(APP_VER_MAJOR ${CMAKE_MATCH_1})
+set(APP_VER_MINOR ${CMAKE_MATCH_2})
+set(APP_VER_PATCH ${CMAKE_MATCH_3})
+set(APP_VER_DIFF  ${CMAKE_MATCH_4})
 set(APP_VER_STR "${APP_VER_MAJOR}.${APP_VER_MINOR}.${APP_VER_PATCH}")
+
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
