@@ -1,6 +1,13 @@
+---
 name: "Package"
 
-on: push
+on:
+  push:
+    paths-ignore:
+      - "*.md"
+      - ".gitignore"
+  schedule:
+    cron: "37 5 * * 3,6"
 
 env:
   BUILD_TYPE: Release
@@ -10,7 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
@@ -18,10 +26,19 @@ jobs:
         run: git describe --tags --match 'v*' >version.txt
 
       - name: Create tarball
-        shell: bash
         run: |
           NAME=nb-dashcam-tools-$(git describe --tags --match 'v*' --abbrev=0 | cut -c2-)
-          tar -C "${{github.workspace}}" -czf "${{runner.temp}}/$NAME.tgz" --exclude-vcs --transform "s,^\\.,$NAME," .
+          tar -C "${{github.workspace}}" -czf "${{runner.temp}}/$NAME.tgz" \
+            --exclude-vcs --transform "s,^\\.,$NAME," .
+          echo "$NAME.tgz" >filename.txt
+
+      - name: Upload tarball
+        uses: actions/upload-artifact@v2
+        with:
+          name: tarball
+          path: |
+            ${{runner.temp}}/nb-dashcam-tools-*.tgz
+            filename.txt
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -33,17 +50,38 @@ jobs:
 
   winpkg:
     runs-on: windows-2019
+    needs: tarpkg
+    env:
+      qtver: "6.0.3"
     steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
+      - name: Setup MSVC command prompt
+        uses: ilammy/msvc-dev-cmd@v1
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Download tarball
+        id: fetch
+        uses: actions/download-artifact@v2
+        with:
+          name: tarball
+          path: ${{runner.temp}}
+
+      - name: Cache Qt
+        id: cache-qt
+        uses: actions/cache@v1
+        with:
+          path: ../Qt
+          key: ${{runner.os}}-${{env.qtver}}-QtCache
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
         with:
-          version: '6.0.3'
+          version: ${{env.qtver}}
+
+      - name: Extract Archive
+        shell: bash
+        run: |
+          tar -C "${{github.workspace}}" \
+            -xf "${{runner.temp}}/$(<${{runner.temp}}/filename.txt)" \
+            --strip-components=1
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWIN_INSTALL_FFMPEG=ON -DWIN_CREATE_SETUP=ON
@@ -53,6 +91,12 @@ jobs:
 
       - name: Install
         run: cmake --install ${{github.workspace}}/build --prefix ${{github.workspace}}/deploy --config ${{env.BUILD_TYPE}}
+
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: winpkg
+          path: ${{github.workspace}}/nb-dashcam-tools-setup.exe
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -64,24 +108,64 @@ jobs:
 
   rpmpkg:
     runs-on: ubuntu-latest
+    needs: tarpkg
+    strategy:
+      matrix:
+        tag: [34]
+    env:
+      DOCKER_BUILDKIT: '1'
     steps:
-      - uses: actions/checkout@v2
+      - name: Download tarball
+        id: fetch
+        uses: actions/download-artifact@v2
         with:
-          fetch-depth: 0
+          name: tarball
+          path: ${{runner.temp}}
 
-      - name: Create version.txt
-        run: git describe --tags --match 'v*' >version.txt
+      - name: Extract Archive
+        run: |
+          tar -C "${{github.workspace}}" \
+            -xf "${{runner.temp}}/$(<${{runner.temp}}/filename.txt)" \
+            --strip-components=1
 
-      - name: Build Container
-        run: docker build -t builder:latest "${{github.workspace}}/.github/docker/rpmpkg"
+      - name: Cache Docker Registry
+        id: cache-docker
+        uses: actions/cache@v2
+        with:
+          path: "${{runner.temp}}/registry"
+          key: docker-registry-${{hashFiles('.github/docker/**'}}
+
+      - name: Start Docker Registry
+        run: |
+          docker run -d -p 5000:5000 --restart=always --name registry \
+            -v "${{runner.temp}}/registry:/var/lib/registry" registry:2
+          npx wait-on tcp:5000
+
+      - name: Build Docker Image
+        run: |
+          docker build -t fedora-rpm-build:${{matrix.tag}} \
+            --build-arg tag=${{matrix.tag}} \
+            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            --cache-from "localhost:5000/fedora-rpm-build:${{matrix.tag}}" \
+            "${{github.workspace}}/.github/docker/rpmpkg"
+
+      - name: Push Docker Image
+        if: steps.cache-docker.outputs.cache-hit != 'true'
+        run: |
+          docker tag fedora-rpm-build:${{matrix.tag}} localhost:5000/fedora-rpm-build:${{matrix.tag}}
+          docker push localhost:5000/fedora-rpm-build:${{matrix.tag}}
 
       - name: Create RPM
-        shell: bash
         run: |
-          VER=$(git describe --tags --match 'v*' --abbrev=0 | cut -c2-)
-          NAME=nb-dashcam-tools-$VER
-          tar -C "${{github.workspace}}" -czf "${{runner.temp}}/$NAME.tgz" --exclude-vcs --transform "s,^\\.,$NAME," .
-          docker run --rm -v "${{runner.temp}}:/mnt" -e "VER=$VER" -e "SRC=$NAME.tgz" builder:latest
+          docker run --rm -v "${{runner.temp}}:/mnt" \
+            -e "VER=$VER" -e "SRC=$NAME.tgz" \
+            fedora-rpm-build:${{matrix.tag}}
+
+      - name: Upload package
+        uses: actions/upload-artifact@v2
+        with:
+          name: rpmpkg-${{matrix.tag}}
+          path: "${{runner.temp}}/nb-dashcam-tools-*.rpm"
 
       - name: Release
         uses: softprops/action-gh-release@v1
