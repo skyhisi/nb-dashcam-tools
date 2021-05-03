@@ -79,7 +79,7 @@ jobs:
       - name: Extract Archive
         shell: bash
         run: |
-          tar -C '${{github.workspace}}' \
+          tar --force-local -C '${{github.workspace}}' \
             -xf '${{runner.temp}}/'$(<'${{runner.temp}}/filename.txt') \
             --strip-components=1
 
