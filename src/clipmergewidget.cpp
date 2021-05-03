@@ -133,26 +133,26 @@ ClipMergeWidget::~ClipMergeWidget()
 void ClipMergeWidget::inputDirSelect()
 {
     QLineEdit* inputDirEdit = findChild<QLineEdit*>("inputDirEdit");
-    QString startDir = inputDirEdit->text();
+    QString startDir = QDir::fromNativeSeparators(inputDirEdit->text());
     if (startDir.isEmpty())
         startDir = QDir::homePath();
     QString dir = QFileDialog::getExistingDirectory(
         this, tr("Select Input Directory"), startDir, QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
     if (!dir.isEmpty())
-        inputDirEdit->setText(dir);
+        inputDirEdit->setText(QDir::toNativeSeparators(dir));
 }
 
 
 void ClipMergeWidget::outputFileSelect()
 {
     QLineEdit* outputFileEdit = findChild<QLineEdit*>("outputFileEdit");
-    QString startDir = outputFileEdit->text();
+    QString startDir = QDir::fromNativeSeparators(outputFileEdit->text());
     if (startDir.isEmpty())
         startDir = QDir::homePath();
     QString filename = QFileDialog::getSaveFileName(
         this, tr("Select Output File"), startDir, "MP4 File (*.mp4)");
     if (!filename.isEmpty())
-        outputFileEdit->setText(filename);
+        outputFileEdit->setText(QDir::toNativeSeparators(filename));
 }
 
 
@@ -160,7 +160,7 @@ void ClipMergeWidget::inputDirChanged()
 {
     QLineEdit* inputDirEdit = findChild<QLineEdit*>("inputDirEdit");
     QTableView* inputFileView = findChild<QTableView*>("inputFileView");
-    QDir inputDir(inputDirEdit->text());
+    QDir inputDir(QDir::fromNativeSeparators(inputDirEdit->text()));
     if (inputDir.exists())
     {
         qDebug() << "Input dir exists" << inputDir.absolutePath();
@@ -297,7 +297,7 @@ void ClipMergeWidget::startMerge()
         duration += probeDuration;
     }
 
-    mOutputFile = outputFileEdit->text();
+    mOutputFile = QDir::fromNativeSeparators(outputFileEdit->text());
     if (mOutputFile.isEmpty())
     {
         mProgDlg->reset();
@@ -319,7 +319,7 @@ void ClipMergeWidget::startMerge()
         QTextStream concatStream(concatFile);
         for (const QString& file : mInputFileList)
         {
-            concatStream << "file '" << file << "'\n";
+            concatStream << "file '" << QDir::toNativeSeparators(file) << "'\n";
         }
     }
     concatFile->close();
@@ -337,7 +337,7 @@ void ClipMergeWidget::startMerge()
     }
 
     // Input args
-    args << "-f" << "concat" << "-safe" << "0" << "-i" << concatFile->fileName();
+    args << "-f" << "concat" << "-safe" << "0" << "-i" << QDir::toNativeSeparators(concatFile->fileName());
 
     QSpinBox* compFactorSpinBox = findChild<QSpinBox*>("compFactorSpinBox");
     QString crfStr(QString::number(compFactorSpinBox->value()));
@@ -365,7 +365,7 @@ void ClipMergeWidget::startMerge()
         args << "-map" << "0:v" << "-map" << "0:a"; // Only merge video & audio
     }
 
-    args << mOutputFile;
+    args << QDir::toNativeSeparators(mOutputFile);
     qDebug() << ToolLocator::instance()->ffmpeg() << args;
 
 
@@ -420,7 +420,7 @@ void ClipMergeWidget::ffmpegStdout()
         {
             float pos = (match.captured(1).toInt() * 3600) + (match.captured(2).toInt() * 60) + match.captured(3).toFloat();
             mProgDlg->setValue(pos);
-            mProgDlg->setLabelText(tr("Merging: %1 / %2").arg(pos).arg(mProgDlg->maximum()));
+            mProgDlg->setLabelText(tr("Merging: %1 / %2").arg(pos, 0, 'f', 1).arg(mProgDlg->maximum()));
         }
     }
 }

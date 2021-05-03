@@ -85,13 +85,13 @@ GpsExportWidget::~GpsExportWidget()
 void GpsExportWidget::selectInputFile()
 {
     QLineEdit* inputFileEdit = findChild<QLineEdit*>("inputFileEdit");
-    QString startDir = inputFileEdit->text();
+    QString startDir = QDir::fromNativeSeparators(inputFileEdit->text());
     if (startDir.isEmpty())
         startDir = QDir::homePath();
     QString filename = QFileDialog::getOpenFileName(
         this, tr("Select Input File"), startDir, "MP4 file (*.mp4 *.MP4)");
     if (!filename.isEmpty())
-        inputFileEdit->setText(filename);
+        inputFileEdit->setText(QDir::toNativeSeparators(filename));
 }
 
 void GpsExportWidget::selectOutputFile()
@@ -109,13 +109,13 @@ void GpsExportWidget::selectOutputFile()
         return;
     }
 
-    QString startDir = outputFileEdit->text();
+    QString startDir = QDir::fromNativeSeparators(outputFileEdit->text());
     if (startDir.isEmpty())
         startDir = QDir::homePath();
     QString filename = QFileDialog::getSaveFileName(
         this, tr("Select Output File"), startDir, filter);
     if (!filename.isEmpty())
-        outputFileEdit->setText(filename);
+        outputFileEdit->setText(QDir::toNativeSeparators(filename));
 }
 
 void GpsExportWidget::inputFileSelected(const QString& text)
@@ -168,8 +168,8 @@ void GpsExportWidget::inputFileSelected(const QString& text)
 
 void GpsExportWidget::startExport()
 {
-    QString inputFileName = findChild<QLineEdit*>("inputFileEdit")->text();
-    mOutputFile = findChild<QLineEdit*>("outputFileEdit")->text();
+    QString inputFileName = QDir::fromNativeSeparators(findChild<QLineEdit*>("inputFileEdit")->text());
+    mOutputFile = QDir::fromNativeSeparators(findChild<QLineEdit*>("outputFileEdit")->text());
     QComboBox* outputFormatComboBox = findChild<QComboBox*>("outputFormatComboBox");
     mExportFormat = GpsExportFormat(outputFormatComboBox->currentData().toInt());
 
@@ -216,7 +216,7 @@ void GpsExportWidget::startExport()
 
     QSettings settings;
     settings.beginGroup("gpsexport");
-    settings.setValue("inputFileEdit", inputFileName);
+    settings.setValue("inputFileEdit", QDir::toNativeSeparators(inputFileName));
     settings.setValue("outputFormatComboBox", outputFormatComboBox->currentIndex());
     settings.setValue("outputFileEdit", mOutputFile);
     settings.endGroup();
@@ -224,10 +224,12 @@ void GpsExportWidget::startExport()
     QStringList args;
     args
         << "-nostdin" << "-hide_banner"
-        << "-i" << inputFileName
+        << "-i" << QDir::toNativeSeparators(inputFileName)
         << "-map" << "0:s" << "-c:s" << "copy"
         << "-f" << "data" << "-";
 
+    qDebug() << ToolLocator::instance()->ffmpeg() << args;
+    
     mFFmpegProc = new QProcess(this);
     mFFmpegProc->setProgram(ToolLocator::instance()->ffmpeg());
     mFFmpegProc->setArguments(args);
