@@ -30,7 +30,7 @@ jobs:
           NAME=nb-dashcam-tools-$(git describe --tags --match 'v*' --abbrev=0 | cut -c2-)
           tar -C "${{github.workspace}}" -czf "${{runner.temp}}/$NAME.tgz" \
             --exclude-vcs --transform "s,^\\.,$NAME," .
-          echo "$NAME.tgz" >filename.txt
+          echo "$NAME.tgz" >"${{runner.temp}}/filename.txt"
 
       - name: Upload tarball
         uses: actions/upload-artifact@v2
@@ -38,7 +38,7 @@ jobs:
           name: tarball
           path: |
             ${{runner.temp}}/nb-dashcam-tools-*.tgz
-            filename.txt
+            ${{runner.temp}}/filename.txt
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -156,10 +156,7 @@ jobs:
           docker push localhost:5000/fedora-rpm-build:${{matrix.tag}}
 
       - name: Create RPM
-        run: |
-          docker run --rm -v "${{runner.temp}}:/mnt" \
-            -e "VER=$VER" -e "SRC=$NAME.tgz" \
-            fedora-rpm-build:${{matrix.tag}}
+        run: docker run --rm -v "${{runner.temp}}:/mnt" fedora-rpm-build:${{matrix.tag}}
 
       - name: Upload package
         uses: actions/upload-artifact@v2
