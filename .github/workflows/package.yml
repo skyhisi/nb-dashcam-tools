@@ -77,11 +77,11 @@ jobs:
           version: ${{env.qtver}}
 
       - name: Extract Archive
-        shell: bash
+        shell: cmd
         run: |
-          tar --force-local -C '${{github.workspace}}' \
-            -xf '${{runner.temp}}/'$(<'${{runner.temp}}/filename.txt') \
-            --strip-components=1
+          set /p FILE=<${{runner.temp}}\filename.txt
+          C:\msys64\usr\bin\tar.exe --force-local -C "${{github.workspace}}" \
+            -xf "${{runner.temp}}\%FILE%" --strip-components=1
 
       - name: Configure CMake
         run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DWIN_INSTALL_FFMPEG=ON -DWIN_CREATE_SETUP=ON
