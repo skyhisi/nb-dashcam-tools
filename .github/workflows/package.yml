@@ -6,6 +6,7 @@ on:
     paths-ignore:
       - "*.md"
       - ".gitignore"
+      - "doc/**"
   schedule:
     - cron: "37 5 * * 3,6"
 

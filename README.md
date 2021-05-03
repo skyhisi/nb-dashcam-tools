@@ -11,6 +11,9 @@ files.
 This product is not developed by or associated with Nextbase or
 Portable Multimedia Limited.
 
+![Screenshot](doc/images/screenshot-merge.png?raw=true)
+
+
 ## Features
 
  * Very fast merging of files in video copy mode - avoids re-encoding video
