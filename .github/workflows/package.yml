@@ -79,8 +79,8 @@ jobs:
       - name: Extract Archive
         shell: bash
         run: |
-          tar -C "${{github.workspace}}" \
-            -xf "${{runner.temp}}/$(<${{runner.temp}}/filename.txt)" \
+          tar -C '${{github.workspace}}' \
+            -xf '${{runner.temp}}/'$(<'${{runner.temp}}/filename.txt') \
             --strip-components=1
 
       - name: Configure CMake
