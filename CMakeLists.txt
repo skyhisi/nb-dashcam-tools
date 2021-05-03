@@ -29,14 +29,13 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/.git")
 endif()
 
 file(READ "${CMAKE_SOURCE_DIR}/version.txt" RAW_VER_STR)
-if(NOT "${RAW_VER_STR}" MATCHES "^v([0-9]+)\.([0-9]+)\.([0-9]+)-([0-9]+)")
+if(NOT "${RAW_VER_STR}" MATCHES "^v([0-9]+)\.([0-9]+)\.([0-9]+)")
   message(FATAL_ERROR "Failed to parse version.txt file")
 endif()
 
 set(APP_VER_MAJOR ${CMAKE_MATCH_1})
 set(APP_VER_MINOR ${CMAKE_MATCH_2})
 set(APP_VER_PATCH ${CMAKE_MATCH_3})
-set(APP_VER_DIFF  ${CMAKE_MATCH_4})
 set(APP_VER_STR "${APP_VER_MAJOR}.${APP_VER_MINOR}.${APP_VER_PATCH}")
 
 
