@@ -70,7 +70,7 @@ jobs:
         uses: actions/cache@v1
         with:
           path: ../Qt
-          key: ${{runner.os}}-${{env.qtver}}-QtCache
+          key: ${{runner.os}}-${{env.qtver}}-QtCache-${{secrets.cache_version}}
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v2
@@ -135,7 +135,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: "${{runner.temp}}/registry"
-          key: docker-registry-${{hashFiles('.github/docker/**')}}
+          key: docker-registry-${{hashFiles('.github/docker/**')}}-${{secrets.cache_version}}
 
       - name: Start Docker Registry
         run: |
