@@ -7,7 +7,7 @@ on:
       - "*.md"
       - ".gitignore"
   schedule:
-    cron: "37 5 * * 3,6"
+    - cron: "37 5 * * 3,6"
 
 env:
   BUILD_TYPE: Release
