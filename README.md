@@ -37,6 +37,7 @@ Camera | Supported | Tested
 
 ## Downloads
  * [Windows Installer](https://github.com/skyhisi/nb-dashcam-tools/releases/latest/download/nb-dashcam-tools-setup.exe)
+ * [Linux Packages and Source](https://github.com/skyhisi/nb-dashcam-tools/releases/latest)
 
 ## Building
 ### Requirements
