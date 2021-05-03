@@ -76,6 +76,8 @@ jobs:
         uses: jurplel/install-qt-action@v2
         with:
           version: ${{env.qtver}}
+          cached: ${{steps.cache-qt.outputs.cache-hit}}
+          setup-python: false
 
       - name: Extract Archive
         shell: cmd

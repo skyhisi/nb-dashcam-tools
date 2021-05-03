@@ -46,6 +46,7 @@ jobs:
         with:
           version: ${{matrix.qtver}}
           cached: ${{steps.cache-qt.outputs.cache-hit}}
+          setup-python: false
 
       - name: Configure Release
         run: cmake -B ${{github.workspace}}/build-release -DCMAKE_BUILD_TYPE=Release
