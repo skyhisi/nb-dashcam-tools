@@ -60,3 +60,7 @@ cmake -DCMAKE_BUILD_TYPE=Debug ..
 cmake --build .
 ./nb-dashcam-tools
 ```
+
+## Documents
+ * [Dashcam Video File Format](doc/camera-file-format.md)
+
