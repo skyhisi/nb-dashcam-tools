@@ -133,7 +133,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: "${{runner.temp}}/registry"
-          key: docker-registry-${{hashFiles('.github/docker/**'}}
+          key: docker-registry-${{hashFiles('.github/docker/**')}}
 
       - name: Start Docker Registry
         run: |
