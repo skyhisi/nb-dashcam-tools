@@ -1,7 +1,7 @@
 # Dashcam Video File Format
 Notes on the video files produced by Nextbase 322GW dashcam.
 This was worked out by examining the MP4 files, this is not official documentation.
-These notes assume some knowledge of the [ISO BMFF](https://en.wikipedia.org/wiki/ISO/IEC_base_media_file_format) (MPEG 4) standard, some atoms are documented in a similar way.
+These notes assume some knowledge of the [ISO BMFF](https://en.wikipedia.org/wiki/ISO/IEC_base_media_file_format) ([ISO/IEC 14496-12:2015](https://standards.iso.org/ittf/PubliclyAvailableStandards/c068960_ISO_IEC_14496-12_2015.zip)) standard, some atoms are documented in a similar way.
 
 There are two main parts of the video file that are non-standard, the extra header atoms within the `moov/udat` atom and the use of the subtitles stream for storing the GPS and accelerometer data.
 
