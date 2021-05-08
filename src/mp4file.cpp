@@ -92,14 +92,26 @@ bool Mp4File::readHeader(AtomHeader* hdr)
 {
     Q_ASSERT(hdr != nullptr);
     unsigned char atomHdr[8];
+    unsigned char longLength[8];
+    hdr->length = hdr->hdrSize = 0;
     if (mFile.read((char*)atomHdr, 8) != 8)
     {
         return false;
     }
     hdr->length = convertUint32(atomHdr);
-    if (hdr->length < 8)
+    hdr->hdrSize = 8;
+    if (hdr->length == 0) // Box until end of file not supported
     {
         return false;
+    }
+    else if (hdr->length == 1) // 64 bit length
+    {
+        if (mFile.read((char*)longLength, 8) != 8)
+        {
+            return false;
+        }
+        hdr->hdrSize = 16;
+        hdr->length = convertUint64(longLength);
     }
     memcpy(hdr->type, atomHdr + 4, 4);
     return true;
@@ -122,13 +134,13 @@ QByteArray Mp4File::readUdta(QString* errMsg)
         }
         if (hdr == "moov")
         {
-            endpos = mFile.pos() + hdr.length - 8;
+            endpos = mFile.pos() + hdr.lengthAfterHdr();
             continue;
         }
         else if (hdr == "udta")
         {
-            QByteArray data = mFile.read(hdr.length - 8);
-            if (data.size() != int(hdr.length - 8))
+            QByteArray data = mFile.read(hdr.lengthAfterHdr());
+            if (data.size() != int(hdr.lengthAfterHdr()))
             {
                 if (errMsg)
                     *errMsg = QObject::tr("Failed to read camera data in file");
@@ -136,7 +148,7 @@ QByteArray Mp4File::readUdta(QString* errMsg)
             }
             return data;
         }
-        mFile.skip(hdr.length - 8);
+        mFile.skip(hdr.lengthAfterHdr());
     }
     if (errMsg)
         *errMsg = QObject::tr("Failed to locate camera data in file");
@@ -155,26 +167,31 @@ bool Mp4File::appendUdta(const QByteArray& data, QString* errMsg)
         qint64 hdrPos = mFile.pos();
         if (!readHeader(&hdr))
         {
+            qDebug() << "Read header failed, hdrPos:" << hdrPos;
             if (errMsg)
-                *errMsg = QObject::tr("Failed to locate camera data in file");
+                *errMsg = QObject::tr("Failed to add camera data to output.\n(Failed to read atom header at pos %1)").arg(hdrPos);
             return false;
         }
+
         if (hdr == "moov")
         {
+            qDebug() << "Found 'moov' at " << hdrPos;
             moovPos = hdrPos;
             moovSize = hdr.length;
-            endpos = mFile.pos() + hdr.length - 8;
+            endpos = mFile.pos() + hdr.lengthAfterHdr();
             continue;
         }
         else if (hdr == "udta")
         {
+            qDebug() << "Found 'udta' at " << hdrPos;
             // Fast update only works if udta is at end of file
-            if ((hdrPos + hdr.length) == mFile.size())
+            if (qint64(hdrPos + hdr.length) == mFile.size())
             {
                 qDebug() << "POS:" << mFile.pos() << "LEN:" << hdr.length << "FILE SIZE:" << mFile.size();
                 quint32 newMoovSize = moovSize + data.size();
                 quint32 newUdtaSize = hdr.length + data.size();
                 qDebug() << "NEW ATOM SIZE:" << newMoovSize << newUdtaSize;
+                qDebug() << "moovPos" << moovPos << "hdrPos" << hdrPos;
 
                 unsigned char newMoovSizeBuf[4];
                 newMoovSizeBuf[0] = (newMoovSize >> 24) & 0xff;
@@ -212,7 +229,11 @@ bool Mp4File::appendUdta(const QByteArray& data, QString* errMsg)
                 return false;
             }
         }
-        mFile.skip(hdr.length - 8);
+        else
+        {
+            qDebug() << "Skip atom " << QLatin1String(hdr.type, 4) << hdr.length;
+        }
+        mFile.skip(hdr.lengthAfterHdr());
     }
     return false;
 }
@@ -232,18 +253,18 @@ QString Mp4File::readInfoString(QString* errMsg)
         }
         if (hdr == "moov")
         {
-            endpos = mFile.pos() + hdr.length - 8;
+            endpos = mFile.pos() + hdr.lengthAfterHdr();
             continue;
         }
         else if (hdr == "udta")
         {
-            endpos = mFile.pos() + hdr.length - 8;
+            endpos = mFile.pos() + hdr.lengthAfterHdr();
             continue;
         }
         else if (hdr == "info")
         {
-            QByteArray data = mFile.read(hdr.length - 8);
-            if (data.size() != int(hdr.length - 8))
+            QByteArray data = mFile.read(hdr.lengthAfterHdr());
+            if (data.size() != int(hdr.lengthAfterHdr()))
             {
                 if (errMsg)
                     *errMsg = QObject::tr("Failed to read camera data in file");
@@ -251,7 +272,7 @@ QString Mp4File::readInfoString(QString* errMsg)
             }
             return QString::fromLatin1(data);
         }
-        mFile.skip(hdr.length - 8);
+        mFile.skip(hdr.lengthAfterHdr());
     }
     if (errMsg)
         *errMsg = QObject::tr("Failed to locate camera data in file");
@@ -274,7 +295,7 @@ double Mp4File::readDuration(QString* errMsg)
         }
         if (hdr == "moov")
         {
-            endpos = mFile.pos() + hdr.length - 8;
+            endpos = mFile.pos() + hdr.lengthAfterHdr();
             continue;
         }
         else if (hdr == "mvhd")
@@ -308,7 +329,7 @@ double Mp4File::readDuration(QString* errMsg)
             }
             return double(duration) / double(timescale);
         }
-        mFile.skip(hdr.length - 8);
+        mFile.skip(hdr.lengthAfterHdr());
     }
     if (errMsg)
         *errMsg = QObject::tr("Failed to locate duration of file");

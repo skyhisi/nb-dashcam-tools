@@ -40,11 +40,15 @@ public:
 private:
     struct AtomHeader
     {
-        quint32 length;
+        quint64 length;
+        quint32 hdrSize;
         char    type[4];
 
         bool operator==(const char* t) const
         {return strncmp(type, t, 4) == 0;}
+
+        quint64 lengthAfterHdr() const
+        {return length - hdrSize;}
     };
     static quint32 convertUint32(const quint8* data);
     static quint64 convertUint64(const quint8* data);

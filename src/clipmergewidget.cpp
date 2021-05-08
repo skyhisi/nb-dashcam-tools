@@ -44,7 +44,8 @@ ClipMergeWidget::ClipMergeWidget(QWidget *parent) :
     mFFmpegStream(),
     mProgDlg(new QProgressDialog(this)),
     mFFmpegRegex("time=(\\d\\d):(\\d\\d):(\\d\\d.\\d\\d)"),
-    mHaveNvenc(false)
+    mHaveNvenc(false),
+    mUdtaData()
 {
     Q_ASSERT(mFFmpegRegex.isValid());
     ui->setupUi(this);
@@ -248,6 +249,7 @@ void ClipMergeWidget::startMerge()
     QPushButton* mergeButton = findChild<QPushButton*>("mergeButton");
     QTableView* inputFileView = findChild<QTableView*>("inputFileView");
     QLineEdit* outputFileEdit = findChild<QLineEdit*>("outputFileEdit");
+    const bool includeGpsData = findChild<QCheckBox*>("includeGpsCheckBox")->isChecked();
 
     QModelIndexList selectionList = inputFileView->selectionModel()->selectedRows();
     mInputFileList.clear();
@@ -268,7 +270,7 @@ void ClipMergeWidget::startMerge()
     }
 
     mInputFileList.sort();
-
+    mUdtaData.clear();
 
     float duration = 0.0f;
     for (int i = 0; i < mInputFileList.size(); ++i)
@@ -285,6 +287,19 @@ void ClipMergeWidget::startMerge()
         }
         QString errmsg;
         double probeDuration = probeFile.readDuration(&errmsg);
+
+        if (includeGpsData && (i == 0))
+        {
+            mUdtaData = probeFile.readUdta(&errmsg);
+            if (mUdtaData.isEmpty())
+            {
+                if (errmsg.isEmpty())
+                    errmsg = tr("Failed to read camera info");
+                QMessageBox::warning(this, tr("Merge"), errmsg);
+                return;
+            }
+        }
+
         probeFile.close();
         if (qIsNaN(probeDuration))
         {
@@ -356,7 +371,7 @@ void ClipMergeWidget::startMerge()
     }
 
     // Subtitle track is GPS data
-    if (findChild<QCheckBox*>("includeGpsCheckBox")->isChecked())
+    if (includeGpsData)
     {
         args << "-c:s" << "copy"; // Copy subtitles
     }
@@ -443,29 +458,14 @@ void ClipMergeWidget::ffmpegFinished(int exitCode, QProcess::ExitStatus exitStat
     if (!findChild<QCheckBox*>("includeGpsCheckBox")->isChecked())
         return;
 
-    Mp4File reader(mInputFileList.at(0));
-    if (!reader.open(QFile::ReadOnly))
-    {
-        QMessageBox::warning(this, tr("Merge"), tr("Failed to open file for camera data"));
-        return;
-    }
-    QString err;
-    QByteArray udtaData = reader.readUdta(&err);
-    if (udtaData.isEmpty() && (!err.isEmpty()))
-    {
-        QMessageBox::warning(this, tr("Merge"), err);
-        return;
-    }
-    reader.close();
-
-
     Mp4File outFile(mOutputFile);
     if (!outFile.open(QFile::ReadWrite | QFile::ExistingOnly))
     {
         QMessageBox::warning(this, tr("Merge"), tr("Failed to open output file to add GPS data."));
         return;
     }
-    if (!outFile.appendUdta(udtaData, &err))
+    QString err;
+    if (!outFile.appendUdta(mUdtaData, &err))
     {
         QMessageBox::warning(this, tr("Merge"), err);
         return;

@@ -62,6 +62,7 @@ private:
     QProgressDialog* mProgDlg;
     QRegularExpression mFFmpegRegex;
     bool mHaveNvenc;
+    QByteArray mUdtaData;
 
     enum VideoEncode
     {
