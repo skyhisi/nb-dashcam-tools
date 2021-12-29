@@ -33,8 +33,8 @@ To add support some sample clips may needed for testing.
 Camera | Supported | Tested
 -------|-----------|-------
 322GW  | Yes       | Yes
-422GW  | Yes       | No
-522GW  | Yes       | No
+422GW  | Maybe     | No
+522GW  | Maybe     | No
 622GW  | Maybe     | No
 
 
