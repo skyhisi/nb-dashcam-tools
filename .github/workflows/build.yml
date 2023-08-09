@@ -14,8 +14,8 @@ on:
       - "CMakeLists.txt"
       - "src/**"
       - ".github/workflows/build.yml"
-  schedule:
-    - cron: "37 5 * * 3,6"
+  # schedule:
+  #   - cron: "37 5 * * 3,6"
 
 permissions: read-all
 
@@ -26,27 +26,27 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        qtver: ['5.15.2', '6.0.4', '6.1.2']
+        qtver: ['5.15.2', '6.2.4', '6.5.2']
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Cache Qt
-        id: cache-qt
-        uses: actions/cache@v1
-        with:
-          path: ../Qt
-          key: ${{runner.os}}-${{matrix.qtver}}-QtCache-${{secrets.cache_version}}
+      - name: Install Dependencies
+        if: ${{env.ACT}}
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -yq build-essential cmake python3-pip
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v2
+        uses: jurplel/install-qt-action@v3
         with:
           version: ${{matrix.qtver}}
-          cached: ${{steps.cache-qt.outputs.cache-hit}}
           setup-python: false
+          dir: "${{runner.temp}}/Qt"
+          cache: true
 
       - name: Configure Release
         run: cmake -B ${{github.workspace}}/build-release -DCMAKE_BUILD_TYPE=Release
