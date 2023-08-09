@@ -1,4 +1,4 @@
-/* Copyright 2021 Silas Parker.
+/* Copyright 2021-2023 Silas Parker.
  *
  * This file is part of NB Dashcam Tools.
  *
@@ -46,6 +46,7 @@ ClipMergeWidget::ClipMergeWidget(QWidget *parent) :
     mProgDlg(new QProgressDialog(this)),
     mFFmpegRegex("time=(\\d\\d):(\\d\\d):(\\d\\d.\\d\\d)"),
     mHaveNvenc(false),
+    mHaveQsv(false),
     mUdtaData()
 {
     Q_ASSERT(mFFmpegRegex.isValid());
@@ -369,6 +370,9 @@ void ClipMergeWidget::startMerge()
     case VideoEncodeNVidia:
         args << "-c:v" << "h264_nvenc" << "-rc" << "vbr" << "-cq" << crfStr;
         break;
+    case VideoEncodeQsv:
+        args << "-c:v" << "h264_qsv" << "-global_quality" << crfStr;
+        break;
     }
 
     // Subtitle track is GPS data
@@ -490,13 +494,14 @@ void ClipMergeWidget::nvencCheckStart()
     if (!libcuda.load())
     {
         qDebug() << "Failed to locate libcuda, skipping ffmpeg check: " << libcuda.errorString();
+        QMetaObject::invokeMethod(this, &ClipMergeWidget::qsvCheckStart, Qt::QueuedConnection);
         return;
     }
     libcuda.unload();
 #endif
     QStringList nvencCheckArgs;
     nvencCheckArgs
-        << "-hide_banner"
+        << "-hide_banner"<< "-nostdin"
         << "-f" << "lavfi" << "-i" << "nullsrc=s=256x256:d=5"
         << "-c:v" << "hevc_nvenc"
         << "-gpu" << "list"
@@ -535,6 +540,45 @@ void ClipMergeWidget::nvencCheckFinished(int, QProcess::ExitStatus exitStatus)
                 videoEncodeComboBox->setCurrentIndex(settings.value("clipmerge/videoEncodeComboBox", 0).toInt());
             }
         }
+    }
+    mFFmpegProc->deleteLater();
+    mFFmpegProc = nullptr;
+    QMetaObject::invokeMethod(this, &ClipMergeWidget::qsvCheckStart, Qt::QueuedConnection);
+}
+
+void ClipMergeWidget::qsvCheckStart()
+{
+    QStringList nvencCheckArgs;
+    nvencCheckArgs
+        << "-hide_banner" << "-nostdin"
+        << "-f" << "lavfi" << "-i" << "nullsrc=s=256x256:d=5"
+        << "-c:v" << "hevc_qsv"
+        << "-f" << "null" << QProcess::nullDevice();
+
+    mFFmpegProc = new QProcess(this);
+    mFFmpegProc->setProgram(ToolLocator::instance()->ffmpeg());
+    mFFmpegProc->setArguments(nvencCheckArgs);
+    mFFmpegProc->setStandardInputFile(QProcess::nullDevice());
+
+    connect(
+        mFFmpegProc,
+        QOverload<int,QProcess::ExitStatus>::of(&QProcess::finished),
+        this,
+        &ClipMergeWidget::qsvCheckFinished);
+
+    mFFmpegProc->start();
+}
+
+void ClipMergeWidget::qsvCheckFinished(int, QProcess::ExitStatus exitStatus)
+{
+    if (exitStatus == QProcess::NormalExit)
+    {
+        mHaveNvenc = true;
+        QComboBox* videoEncodeComboBox = findChild<QComboBox*>("videoEncodeComboBox");
+        videoEncodeComboBox->addItem(tr("Re-encode Video Using Intel QSV"), QVariant(int(VideoEncodeQsv)));
+
+        QSettings settings;
+        videoEncodeComboBox->setCurrentIndex(settings.value("clipmerge/videoEncodeComboBox", 0).toInt());
     }
     mFFmpegProc->deleteLater();
     mFFmpegProc = nullptr;

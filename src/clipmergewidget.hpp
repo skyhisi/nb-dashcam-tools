@@ -1,4 +1,4 @@
-/* Copyright 2021 Silas Parker.
+/* Copyright 2021-2023 Silas Parker.
  *
  * This file is part of NB Dashcam Tools.
  *
@@ -50,6 +50,8 @@ private slots:
     void cancelMerge();
     void nvencCheckStart();
     void nvencCheckFinished(int exitCode, QProcess::ExitStatus exitStatus);
+    void qsvCheckStart();
+    void qsvCheckFinished(int exitCode, QProcess::ExitStatus exitStatus);
     void encodeChanged();
 
 private:
@@ -62,13 +64,15 @@ private:
     QProgressDialog* mProgDlg;
     QRegularExpression mFFmpegRegex;
     bool mHaveNvenc;
+    bool mHaveQsv;
     QByteArray mUdtaData;
 
     enum VideoEncode
     {
         VideoEncodeCopy = 0,
         VideoEncodeSoftware,
-        VideoEncodeNVidia
+        VideoEncodeNVidia,
+        VideoEncodeQsv
     };
 
 };
