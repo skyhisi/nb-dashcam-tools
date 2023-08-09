@@ -58,7 +58,7 @@ jobs:
 
       - name: Download tarball
         id: fetch
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: tarball
           path: ${{runner.temp}}
@@ -112,7 +112,7 @@ jobs:
     steps:
       - name: Download tarball
         id: fetch
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: tarball
           path: ${{runner.temp}}
