@@ -14,8 +14,6 @@ on:
       - "CMakeLists.txt"
       - "src/**"
       - ".github/workflows/build.yml"
-  # schedule:
-  #   - cron: "37 5 * * 3,6"
 
 permissions: read-all
 
