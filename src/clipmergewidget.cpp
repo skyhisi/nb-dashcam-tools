@@ -29,6 +29,7 @@
 #include <QtGlobal>
 #include <QDateTime>
 #include <QSettings>
+#include <QLibrary>
 
 #include "mp4file.hpp"
 #include "toollocator.hpp"
@@ -484,6 +485,15 @@ void ClipMergeWidget::cancelMerge()
 
 void ClipMergeWidget::nvencCheckStart()
 {
+#ifdef Q_OS_LINUX
+    QLibrary libcuda("cuda");
+    if (!libcuda.load())
+    {
+        qDebug() << "Failed to locate libcuda, skipping ffmpeg check: " << libcuda.errorString();
+        return;
+    }
+    libcuda.unload();
+#endif
     QStringList nvencCheckArgs;
     nvencCheckArgs
         << "-hide_banner"
